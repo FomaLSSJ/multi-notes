@@ -1,0 +1,43 @@
+doctype html
+html(ng-app)
+  head
+    title Chat Example
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    link(rel="stylesheet", href="/css/bootstrap.min.css")
+    link(rel="stylesheet", href="/css/bootstrap-responsive.min.css")
+    link(rel="stylesheet", href="/css/style.css")
+    script(type='text/javascript', src='js/socket.js')
+  body
+    div.container(ng-controller="ChatController")
+      div.navbar.navbar-fixed-top.navbar-inverse
+        div.navbar-inner
+          div.pull-right
+            a.brand(href="https://c9.io") Cloud9 IDE
+      div.page-header
+        h1 Chat Example
+      div.row
+        div.span3
+          ul.nav.nav-list.well
+            li.nav-header Local Users
+            li(ng-repeat="user in roster", ng-bind="user")
+        div.span9
+          table.table.table-striped.table-bordered
+            thead
+              tr
+                th.span2 Name
+                th.span7 Text
+            tbody
+              tr(ng-repeat="msg in messages")
+                td.span2(ng-bind="msg.name")
+                td.span7(ng-bind="msg.text")
+          div.row.controls
+            form(ng-submit="send()")
+              div.span2
+                input.input-block-level(type="text", ng-model="name", ng-change="setName()", placeholder="Your Name")
+              div.input-append.span7
+                input.span6(type="text", ng-model="text", placeholder="Message")
+                input.span1.btn.btn-primary(type="submit", value="Send", ng-disabled="!text")
+    script(type='text/javascript', src="/socket.io/socket.io.js")
+    script(type='text/javascript', src="/js/jquery.min.js")
+    script(type='text/javascript', src="/js/bootstrap.min.js")
+    script(type='text/javascript', src="/js/angular.min.js")
