@@ -4,8 +4,11 @@ var express = require('express');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+var passport = require('passport');
 
 var index = require('./routes/index');
+var users = require('./routes/users');
+var notes = require('./routes/notes');
 var app = express();
 
 var db = require('./lib/mongoose');
@@ -22,8 +25,11 @@ app.use(session({
   saveUninitialized: config.get('session:saveUninitialized'),
   cookie: config.get('session:cookie'),
 }));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.static(path.resolve(__dirname, 'client')));
 app.use('/', index);
-
+app.use('/users', users);
+app.use('/notes', notes);
 
 module.exports = app;
