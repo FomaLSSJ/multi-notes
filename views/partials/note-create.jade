@@ -1,0 +1,17 @@
+div.modal-header
+	h2(ng-bind="vm.note.title")
+div.modal-body
+	div.thumbnail
+		div(ui-codemirror="{onLoad: vm.init}", ui-codemirror-opts="vm.editor.options", ng-model="vm.editor.text", ui-refresh="vm.editor.refresh")
+	div.form-group.row
+		div.col-md-6
+			label Title
+			input.form-control(type="text", ng-model="vm.note.title", placeholder="Title")
+		div.col-md-6
+			label Type
+			select.form-control(ng-model="vm.note.type", placeholder="Type")
+				option(value="public") Public
+				option(value="private") Private
+div.modal-footer
+	button.btn.btn-primary(type="button", ng-click="vm.ok()", ng-bind="vm.editor.data.button")
+	button.btn.btn-warning(type="button", ng-click="vm.cancel()") Cancel

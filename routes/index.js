@@ -2,7 +2,13 @@ var express = require('express');
 var router = express.Router();
 
 router.get('/', function(req, res, next) {
-  res.render('index');
+  res.render('index', {
+      user: req.session.user
+  });
+});
+
+router.get('/partials/:id', function(req, res, next) {
+  res.render('partials/' + req.params.id);
 });
 
 module.exports = router;

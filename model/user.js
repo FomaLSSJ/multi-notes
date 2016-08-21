@@ -4,7 +4,7 @@ var mongoose = require('mongoose'),
     uuid = require('node-uuid');
 
 var user = new Schema({
-    email: {
+    username: {
         type: String,
         required: true,
         unique: true
@@ -36,14 +36,6 @@ user.methods.setPassword = function(password) {
 user.methods.isValidPassword = function(password) {
     return this.password === hash(password, this.salt);
 }
-
-user.set('toJSON', {
-    transform: function (doc, ret, options) {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-    }
-});
 
 var userModel = mongoose.model('user', user);
 module.exports.userModel = userModel;

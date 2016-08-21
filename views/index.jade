@@ -1,43 +1,66 @@
 doctype html
-html(ng-app)
-  head
-    title Chat Example
-    meta(name="viewport", content="width=device-width, initial-scale=1.0")
-    link(rel="stylesheet", href="/css/bootstrap.min.css")
-    link(rel="stylesheet", href="/css/bootstrap-responsive.min.css")
-    link(rel="stylesheet", href="/css/style.css")
-    script(type='text/javascript', src='js/socket.js')
-  body
-    div.container(ng-controller="ChatController")
-      div.navbar.navbar-fixed-top.navbar-inverse
-        div.navbar-inner
-          div.pull-right
-            a.brand(href="https://c9.io") Cloud9 IDE
-      div.page-header
-        h1 Chat Example
-      div.row
-        div.span3
-          ul.nav.nav-list.well
-            li.nav-header Local Users
-            li(ng-repeat="user in roster", ng-bind="user")
-        div.span9
-          table.table.table-striped.table-bordered
-            thead
-              tr
-                th.span2 Name
-                th.span7 Text
-            tbody
-              tr(ng-repeat="msg in messages")
-                td.span2(ng-bind="msg.name")
-                td.span7(ng-bind="msg.text")
-          div.row.controls
-            form(ng-submit="send()")
-              div.span2
-                input.input-block-level(type="text", ng-model="name", ng-change="setName()", placeholder="Your Name")
-              div.input-append.span7
-                input.span6(type="text", ng-model="text", placeholder="Message")
-                input.span1.btn.btn-primary(type="submit", value="Send", ng-disabled="!text")
-    script(type='text/javascript', src="/socket.io/socket.io.js")
-    script(type='text/javascript', src="/js/jquery.min.js")
-    script(type='text/javascript', src="/js/bootstrap.min.js")
-    script(type='text/javascript', src="/js/angular.min.js")
+html(ng-app='app')
+    head
+        title Multi-Notes
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        link(rel="stylesheet", href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css")
+        link(rel="stylesheet", href="/css/codemirror.css")
+        link(rel="stylesheet", href="/css/style.css")
+        script(type='text/javascript', src="/js/jquery.min.js")
+        script(type='text/javascript', src="/js/codemirror.js")
+        script(type='text/javascript', src="//codemirror.net/mode/javascript/javascript.js")
+        script(type='text/javascript', src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js")
+        script(type='text/javascript', src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.js")
+        script(type='text/javascript', src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular-sanitize.js")
+        script(type='text/javascript', src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.0.2/ui-bootstrap-tpls.min.js")
+        script(type='text/javascript', src="/socket.io/socket.io.js")
+        script(type='text/javascript', src="/js/ui-codemirror.js")
+        script(type='text/javascript', src='/js/socket.js')
+    body
+        div.container(ng-controller="NotesController as vm")
+            div.navbar.navbar-default.navbar-fixed-top
+                div.container
+                    div.navbar-header
+                        div.pull-right
+                            a.navbar-brand(href="/") Multi-Notes
+                        
+            div.page-header
+                h1 Multi-Notes
+            div.row
+                if user
+                    div.col-md-3
+                        ul.nav.nav-list.well
+                            li.nav-header Hello
+                            li #{ user._id }
+                            li #{ user.username }
+                    div.col-md-9
+                        table.table.table-striped.table-bordered
+                            thead
+                                tr
+                                    th.col-md-2 Title
+                                    th.col-md-7 Text
+                            tbody
+                                tr(ng-repeat="note in vm.notes track by $index")
+                                    td
+                                        a(href="#", ng-click="vm.noteModal({note})", ng-bind="note.title")
+                                    td 
+                                        span(ng-bind-html="vm.getOwner({note})")
+                        div.box
+                            button.btn.btn-default(type="button", ng-click="vm.noteModal()") New note
+                            button.btn.btn-default(type="button", ng-click="vm.dropOwned()") Drop owned
+                            form.pull-right(method="POST", action="/users/logout")
+                                input.btn.btn-default(type="submit", value="Logout")
+                else
+                    div.col-md-3
+                        ul.nav.nav-list.well
+                            li.nav-header Please login or register
+                    div.col-md-9
+                        form(action="/user/login", method="POST")
+                            div.form-group
+                                div.col-md-3
+                                    input.form-control(type="text", name="username", placeholder="Username")
+                                div.col-md-3
+                                    input.form-control(type="password", name="password", placeholder="Password")
+                                div.col-md-3
+                                    input.btn.btn-default(type="submit", value="Submit")
+    //include ./modals/note.create.jade

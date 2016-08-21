@@ -12,6 +12,7 @@ var notes = require('./routes/notes');
 var app = express();
 
 var db = require('./lib/mongoose');
+var sessionStore = require('./lib/store');
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -24,12 +25,13 @@ app.use(session({
   resave: config.get('session:resave'),
   saveUninitialized: config.get('session:saveUninitialized'),
   cookie: config.get('session:cookie'),
+  store: sessionStore
 }));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.resolve(__dirname, 'client')));
 app.use('/', index);
-app.use('/users', users);
-app.use('/notes', notes);
+app.use('/user', users);
+app.use('/note', notes);
 
 module.exports = app;

@@ -11,7 +11,8 @@ var note = Schema({
     },
     type: {
         type: String,
-        enum: ['private', 'public'],
+        enum: ['public', 'private'],
+        default: 'public',
         required: true
     },
     owner: {
