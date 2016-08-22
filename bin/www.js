@@ -18,14 +18,17 @@ var owners = [];
 var noteModel = require('../model/note').noteModel;
 var sessionStore = require('../lib/store');
 
-getNotes(function(res) {
-    notes = res;
-});
-
 io.on('connection', function (socket) {
     sockets.push(socket);
-    socket.emit('notes', notes);
+    //socket.emit('notes', notes);
     socket.emit('owners', owners);
+
+    socket.on('notes', function() {
+        getNotes(function(res) {
+            notes = res;
+            broadcast('notes', notes);
+        });
+    });
 
     socket.on('disconnect', function () {
         droped(socket);

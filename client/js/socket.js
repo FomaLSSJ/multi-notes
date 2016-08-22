@@ -26,6 +26,7 @@
         
         vm.init = init;
         vm.send = send;
+        vm.getNotes = getNotes;
         vm.setName = setName;
         vm.selectNote = selectNote;
         vm.getOwner = getOwner;
@@ -61,11 +62,15 @@
         
         socket.on('already', function(data) {
             vm.noteOwned = data;
-            console.log(data);
         });
         
         function init(data) {
             vm.setName();
+            vm.getNotes();
+        }
+        
+        function getNotes() {
+            socket.emit('notes');
         }
         
         function send() {
@@ -97,7 +102,6 @@
         }
         
         function noteModal(object) {
-            console.log(object);
             var data = {};
             
             if (typeof object !== 'undefined') {
@@ -108,7 +112,7 @@
             }
             
             $timeout(function() {
-                if (vm.noteOwned.id !== object.note._id) {
+                if ((typeof object === 'undefined') || (vm.noteOwned.id !== object.note._id)) {
                     var modalInstance = $uibModal.open({
                         templateUrl: '/partials/note-create',
                         controller: 'ModalController as vm',
@@ -121,6 +125,7 @@
                 
                     modalInstance.result.then(function(res) {
                         vm.selected = res;
+                        vm.getNotes();
                     }, function () {
                         vm.dropOwned();
                     });
