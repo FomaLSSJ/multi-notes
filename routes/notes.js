@@ -14,11 +14,6 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/create', function(req, res, next) {
-    console.log('body');
-    console.log(req.body.title);
-    console.log('params');
-    console.log(req.params.title);
-    
     var note = new noteModel({
         title: req.body.title,
         text: req.body.text,
@@ -29,6 +24,22 @@ router.post('/create', function(req, res, next) {
     note.save(function(err, note) {
         if (err) {
             return next(err);
+        } else {
+            return res.send({status: true, message: 'success', note: note});
+        }
+    });
+});
+
+router.post('/update', function(req, res, next) {
+    noteModel.findOneAndUpdate({ _id: req.body.id }, {
+        $set: {
+            title: req.body.title,
+            text: req.body.text,
+            type: req.body.type
+        }
+    }, {}, function(err, note) {
+        if (err) {
+            return res.send({status: false, message: 'error', error: err});
         } else {
             return res.send({status: true, message: 'success', note: note});
         }

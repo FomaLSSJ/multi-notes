@@ -2,7 +2,7 @@ div.modal-header
 	h2(ng-bind="vm.note.title")
 div.modal-body
 	div.thumbnail
-		div(ui-codemirror="{onLoad: vm.init}", ui-codemirror-opts="vm.editor.options", ng-model="vm.editor.text", ui-refresh="vm.editor.refresh")
+		div(ui-codemirror="vm.editor.options", ng-model="vm.editor.text", ui-refresh="vm.editor.refresh")
 	div.form-group.row
 		div.col-md-6
 			label Title
@@ -13,5 +13,5 @@ div.modal-body
 				option(value="public") Public
 				option(value="private") Private
 div.modal-footer
-	button.btn.btn-primary(type="button", ng-click="vm.ok()", ng-bind="vm.editor.data.button")
-	button.btn.btn-warning(type="button", ng-click="vm.cancel()") Cancel
+	button.btn.btn-primary(type="button", ng-click="vm.ok()", ng-if="vm.editor.data.button") Save
+	button.btn.btn-warning(type="button", ng-click="vm.cancel()") Close

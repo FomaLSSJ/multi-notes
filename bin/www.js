@@ -65,7 +65,17 @@ io.on('connection', function (socket) {
     socket.on('dropOwned', function() {
         dropOwned(socket);
     });
+    
+    socket.on('change', function(data) {
+        editorChange(socket, data);
+    });
 });
+
+function editorChange(socket, data) {
+    if (data.change.origin == '+input' || data.change.origin == 'paste' || data.change.origin == '+delete') {
+        socket.broadcast.emit('change', data);
+    }
+}
 
 function getNotes(callback) {
     noteModel.find({}, {__v: 0, created_at: 0, updated_at: 0}, function(err, notes, next) {

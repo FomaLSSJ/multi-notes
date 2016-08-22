@@ -6,16 +6,42 @@
 (function() {
     'use strict';
     
+    angular.module('app').factory('SocketIO', SocketIO);
     angular.module('app').controller('NotesController', NotesController);
     angular.module('app').controller('ModalController', ModalController);
     
-    NotesController.$inject = ['$scope', '$sce', '$uibModal', '$timeout'];
-    ModalController.$inject = ['$scope', '$uibModalInstance', '$http', '$timeout', 'data'];
+    SocketIO.$inject = ['$rootScope'];
+    NotesController.$inject = ['$scope', '$sce', '$uibModal', '$timeout', 'SocketIO'];
+    ModalController.$inject = ['$scope', '$uibModalInstance', '$http', '$timeout', 'SocketIO', 'data'];
     
-    function NotesController($scope, $sce, $uibModal, $timeout) {
+    function SocketIO($rootScope) {
+        var socket = io.connect();
+        return {
+            on: function (eventName, callback) {
+                socket.on(eventName, function () {  
+                    var args = arguments;
+                    $rootScope.$apply(function () {
+                        callback.apply(socket, args);
+                    });
+                });
+            },
+            emit: function (eventName, data, callback) {
+                socket.emit(eventName, data, function () {
+                    var args = arguments;
+                    $rootScope.$apply(function () {
+                        if (callback) {
+                            callback.apply(socket, args);
+                        }
+                    });
+                });
+            }
+        };
+    }
+    
+    function NotesController($scope, $sce, $uibModal, $timeout, SocketIO) {
         var vm = this;
         
-        var socket = io.connect();
+        //var socket = io.connect();
         
         vm.messages = [];
         vm.roster = [];
@@ -36,31 +62,31 @@
         //$scope.name = '';
         //$scope.text = '';
         
-        socket.on('connect', function(data) {
+        SocketIO.on('connect', function(data) {
             vm.init(data);
         });
         
-        socket.on('message', function(msg) {
+        SocketIO.on('message', function(msg) {
             vm.messages.push(msg);
-            $scope.$apply();
+            //$scope.$apply();
         });
         
-        socket.on('roster', function(names) {
+        SocketIO.on('roster', function(names) {
             vm.roster = names;
-            $scope.$apply();
+            //$scope.$apply();
         });
         
-        socket.on('notes', function(notes) {
+        SocketIO.on('notes', function(notes) {
             vm.notes = notes;
-            $scope.$apply();
+            //$scope.$apply();
         });
         
-        socket.on('owners', function(owners) {
+        SocketIO.on('owners', function(owners) {
             vm.owners = owners;
-            $scope.$apply();
+            //$scope.$apply();
         });
         
-        socket.on('already', function(data) {
+        SocketIO.on('already', function(data) {
             vm.noteOwned = data;
         });
         
@@ -70,21 +96,21 @@
         }
         
         function getNotes() {
-            socket.emit('notes');
+            SocketIO.emit('notes');
         }
         
         function send() {
             console.log('Sending message:', vm.text);
-            socket.emit('message', vm.text);
+            SocketIO.emit('message', vm.text);
             vm.text = '';
         }
         
         function setName() {
-            socket.emit('identify');
+            SocketIO.emit('identify');
         }
         
         function selectNote(index) {
-            socket.emit('select', index);
+            SocketIO.emit('select', index);
         }
         
         function getOwner(object) {
@@ -98,7 +124,7 @@
         }
         
         function dropOwned() {
-            socket.emit('dropOwned');
+            SocketIO.emit('dropOwned');
         }
         
         function noteModal(object) {
@@ -106,37 +132,41 @@
             
             if (typeof object !== 'undefined') {
                 vm.selectNote(object.note._id);
-                data = {object: object.note, button: 'Edit'};
+                data = {object: object.note, button: false};
             } else {
-                data = {button:'Save'};
+                data = {button: 'nocursor'};
             }
             
             $timeout(function() {
                 if ((typeof object === 'undefined') || (vm.noteOwned.id !== object.note._id)) {
-                    var modalInstance = $uibModal.open({
-                        templateUrl: '/partials/note-create',
-                        controller: 'ModalController as vm',
-                        resolve: {
-                            data: function() {
-                                return data;
-                            }
-                        }
-                    });
-                
-                    modalInstance.result.then(function(res) {
-                        vm.selected = res;
-                        vm.getNotes();
-                    }, function () {
-                        vm.dropOwned();
-                    });
+                    data.read = false;
                 } else {
-                    alert(vm.noteOwned.message);
+                    data.read = true;
+                    //alert(vm.noteOwned.message);
                 }
+                
+                var modalInstance = $uibModal.open({
+                    templateUrl: '/partials/note-create',
+                    controller: 'ModalController as vm',
+                    resolve: {
+                        data: function() {
+                            return data;
+                        }
+                    }
+                });
+            
+                modalInstance.result.then(function(res) {
+                    vm.selected = res;
+                    vm.getNotes();
+                }, function () {
+                    vm.dropOwned();
+                    vm.getNotes();
+                });
             }, 100);
         }
     }
     
-    function ModalController($scope, $uibModalInstance, $http, $timeout, data) {
+    function ModalController($scope, $uibModalInstance, $http, $timeout, SocketIO, data) {
         var vm = this;
         
         vm.editor = {
@@ -144,7 +174,21 @@
             options: {
                 lineWrapping : true,
                 lineNumbers: true,
-                autoRefresh: true
+                autoRefresh: true,
+                readOnly: data.read,
+                onLoad: function(cm) {
+                    vm.init();
+                    if (typeof data.object !== 'undefined') {
+                        SocketIO.on('change', function(object) {
+                            if (data.object._id === object.id) {
+                                cm.replaceRange(object.change.text, object.change.from, object.change.to);
+                            }
+                        });
+                        cm.on('change', function(e, c) {
+                            SocketIO.emit('change', { id: data.object._id, change: c });
+                        });
+                    }
+                }
             }
         };
         
@@ -182,7 +226,21 @@
         }
 
         function cancel() {
-            $uibModalInstance.dismiss('cancel');
+            if (typeof data.object !== 'undefined') {
+                $http({
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    url: '/note/update',
+                    data: $.param({
+                        id: vm.editor.data.object._id,
+                        title: vm.note.title,
+                        text: vm.editor.text,
+                        type: vm.note.type
+                    })
+                }).then(function(res) {
+                    $uibModalInstance.dismiss('cancel');
+                });
+            }
         }
     }
 })();
